@@ -2,6 +2,7 @@
 #include <openssl/bn.h>
 
 
+// Function to print a BIGNUM in decimal format
 void printBN(char *msg, BIGNUM *a) {
     char *number_str = BN_bn2dec(a);
     printf("%s %s\n", msg, number_str);
@@ -9,165 +10,188 @@ void printBN(char *msg, BIGNUM *a) {
 }
 
 
+// Function to compute private key d given p, q, and e
+BIGNUM *compute_d(BIGNUM *p, BIGNUM *q, BIGNUM *e, BN_CTX *ctx) {
+    BIGNUM *phi = BN_new();
+    BIGNUM *p_minus_1 = BN_new();
+    BIGNUM *q_minus_1 = BN_new();
+    BIGNUM *d = BN_new();
+
+    // Calculate phi = (p-1)*(q-1)
+    BN_sub(p_minus_1, p, BN_value_one());
+    BN_sub(q_minus_1, q, BN_value_one());
+    BN_mul(phi, p_minus_1, q_minus_1, ctx);
+
+    // Calculate d = e^(-1) mod phi
+    BN_mod_inverse(d, e, phi, ctx);
+
+    BN_free(phi);
+    BN_free(p_minus_1);
+    BN_free(q_minus_1);
+
+    return d;
+}
+
+
+// Function to encrypt a message M with public key (e,n)
+BIGNUM *encrypt(BIGNUM *M, BIGNUM *e, BIGNUM *n, BN_CTX *ctx) {
+    BIGNUM *C = BN_new();
+
+    // C = M^e mod n
+    BN_mod_exp(C, M, e, n, ctx);
+
+    return C;
+}
+
+
+// Function to decrypt a ciphertext C with private key (d,n)
+BIGNUM *decrypt(BIGNUM *C, BIGNUM *d, BIGNUM *n, BN_CTX *ctx) {
+    BIGNUM *M = BN_new();
+
+    // M = C^d mod n
+    BN_mod_exp(M, C, d, n, ctx);
+
+    return M;
+}
+
+
+// Function to verify a signature S using public key (e,n)
+int verify_signature(BIGNUM *M, BIGNUM *S, BIGNUM *e, BIGNUM *n, BN_CTX *ctx) {
+    BIGNUM *calculated_M = BN_new();
+    int result;
+
+    // M' = S^e mod n
+    BN_mod_exp(calculated_M, S, e, n, ctx);
+
+    // Compare M' with M
+    result = (BN_cmp(calculated_M, M) == 0);
+
+    BN_free(calculated_M);
+    return result;
+}
+
+
 int main() {
     BN_CTX *ctx = BN_CTX_new();
+    BIGNUM *p, *q, *n, *e, *d, *M, *C, *S;
 
     printf("RSA Problem Solutions\n");
     printf("=====================\n\n");
 
     /* Problem 1: n = 6887, e = 143, M = 1234, d = ?, C = ? */
     printf("Problem 1: n = 6887, e = 143, M = 1234, d = ?, C = ?\n");
+    n = BN_new(); e = BN_new(); M = BN_new();
+    BN_dec2bn(&n, "6887");
+    BN_dec2bn(&e, "143");
+    BN_dec2bn(&M, "1234");
 
-    BIGNUM *p1 = BN_new();
-    BIGNUM *q1 = BN_new();
-    BIGNUM *n1 = BN_new();
-    BIGNUM *e1 = BN_new();
-    BIGNUM *d1 = BN_new();
-    BIGNUM *phi1 = BN_new();
-    BIGNUM *M1 = BN_new();
-    BIGNUM *C1 = BN_new();
+    // For this problem, we don't have p and q directly.
+    // We would need to factor n to find p and q, which is difficult for large n.
+    // However, for this small n, we can find the factors.
+    // n = 6887 = 71 * 97
+    p = BN_new(); q = BN_new();
+    BN_dec2bn(&p, "71");
+    BN_dec2bn(&q, "97");
 
-    // Initialize known values
-    BN_dec2bn(&n1, "6887");
-    BN_dec2bn(&e1, "143");
-    BN_dec2bn(&M1, "1234");
-
-    // Factor n (for this example: n = 6887 = 71 * 97)
-    BN_dec2bn(&p1, "71");
-    BN_dec2bn(&q1, "97");
-
-    // Calculate phi = (p-1)*(q-1)
-    BIGNUM *p1_minus_1 = BN_new();
-    BIGNUM *q1_minus_1 = BN_new();
-    BN_sub(p1_minus_1, p1, BN_value_one());
-    BN_sub(q1_minus_1, q1, BN_value_one());
-    BN_mul(phi1, p1_minus_1, q1_minus_1, ctx);
-
-    // Calculate d = e^(-1) mod phi
-    BN_mod_inverse(d1, e1, phi1, ctx);
-    printBN("d =", d1);
+    // Calculate d
+    d = compute_d(p, q, e, ctx);
+    printBN("d =", d);
 
     // Calculate C = M^e mod n
-    BN_mod_exp(C1, M1, e1, n1, ctx);
-    printBN("C =", C1);
-
-    // Clean up
-    BN_free(p1);
-    BN_free(q1);
-    BN_free(n1);
-    BN_free(e1);
-    BN_free(d1);
-    BN_free(phi1);
-    BN_free(M1);
-    BN_free(C1);
-    BN_free(p1_minus_1);
-    BN_free(q1_minus_1);
+    C = encrypt(M, e, n, ctx);
+    printBN("C =", C);
 
     printf("\n");
 
     /* Problem 2: n = 69353, e = ?, M = 12345, d = 29401, C = ? */
     printf("Problem 2: n = 69353, e = ?, M = 12345, d = 29401, C = ?\n");
+    BN_free(n); BN_free(e); BN_free(M); BN_free(d); BN_free(C);
+    n = BN_new(); M = BN_new(); d = BN_new();
+    BN_dec2bn(&n, "69353");
+    BN_dec2bn(&M, "12345");
+    BN_dec2bn(&d, "29401");
 
-    BIGNUM *n2 = BN_new();
-    BIGNUM *e2 = BN_new();
-    BIGNUM *d2 = BN_new();
-    BIGNUM *M2 = BN_new();
-    BIGNUM *C2 = BN_new();
+    // Factor n to find p and q
+    // n = 69353 = 251 * 277
+    BN_free(p); BN_free(q);
+    p = BN_new(); q = BN_new();
+    BN_dec2bn(&p, "251");
+    BN_dec2bn(&q, "277");
 
-    // Initialize known values
-    BN_dec2bn(&n2, "69353");
-    BN_dec2bn(&d2, "29401");
-    BN_dec2bn(&M2, "12345");
+    // Calculate phi = (p-1)*(q-1)
+    BIGNUM *phi = BN_new();
+    BIGNUM *p_minus_1 = BN_new();
+    BIGNUM *q_minus_1 = BN_new();
+    BN_sub(p_minus_1, p, BN_value_one());
+    BN_sub(q_minus_1, q, BN_value_one());
+    BN_mul(phi, p_minus_1, q_minus_1, ctx);
 
-    // For Problem 2, directly use the expected value e = 9601
-    BN_dec2bn(&e2, "9601");
-    printBN("e =", e2);
+    // Find e such that e*d = 1 mod phi
+    e = BN_new();
+    BN_mod_inverse(e, d, phi, ctx);
+    printBN("e =", e);
 
     // Calculate C = M^e mod n
-    BN_mod_exp(C2, M2, e2, n2, ctx);
-    printBN("C =", C2);
-
-    // Clean up
-    BN_free(n2);
-    BN_free(e2);
-    BN_free(d2);
-    BN_free(M2);
-    BN_free(C2);
+    C = encrypt(M, e, n, ctx);
+    printBN("C =", C);
 
     printf("\n");
 
     /* Problem 3: p = 37, q = 67, e = 169, M = ?, d = ?, C = 1744 */
     printf("Problem 3: p = 37, q = 67, e = 169, M = ?, d = ?, C = 1744\n");
-
-    BIGNUM *p3 = BN_new();
-    BIGNUM *q3 = BN_new();
-    BIGNUM *n3 = BN_new();
-    BIGNUM *e3 = BN_new();
-    BIGNUM *d3 = BN_new();
-    BIGNUM *phi3 = BN_new();
-    BIGNUM *M3 = BN_new();
-    BIGNUM *C3 = BN_new();
-
-    // Initialize known values
-    BN_dec2bn(&p3, "37");
-    BN_dec2bn(&q3, "67");
-    BN_dec2bn(&e3, "169");
-    BN_dec2bn(&C3, "1744");
+    BN_free(p); BN_free(q); BN_free(e); BN_free(d); BN_free(M); BN_free(C);
+    p = BN_new(); q = BN_new(); e = BN_new(); C = BN_new();
+    BN_dec2bn(&p, "37");
+    BN_dec2bn(&q, "67");
+    BN_dec2bn(&e, "169");
+    BN_dec2bn(&C, "1744");
 
     // Calculate n = p*q
-    BN_mul(n3, p3, q3, ctx);
-    printBN("n =", n3);
+    n = BN_new();
+    BN_mul(n, p, q, ctx);
+    printBN("n =", n);
 
-    // Calculate phi = (p-1)*(q-1)
-    BIGNUM *p3_minus_1 = BN_new();
-    BIGNUM *q3_minus_1 = BN_new();
-    BN_sub(p3_minus_1, p3, BN_value_one());
-    BN_sub(q3_minus_1, q3, BN_value_one());
-    BN_mul(phi3, p3_minus_1, q3_minus_1, ctx);
-
-    // Calculate d = e^(-1) mod phi
-    BN_mod_inverse(d3, e3, phi3, ctx);
-    printBN("d =", d3);
+    // Calculate d
+    d = compute_d(p, q, e, ctx);
+    printBN("d =", d);
 
     // Calculate M = C^d mod n
-    BN_mod_exp(M3, C3, d3, n3, ctx);
-    printBN("M =", M3);
-
-    // Clean up
-    BN_free(p3_minus_1);
-    BN_free(q3_minus_1);
+    M = decrypt(C, d, n, ctx);
+    printBN("M =", M);
 
     printf("\n");
 
-    /* Problem 4: Using values from Problem 3, verify signature S = 1459 */
+    /* Problem 4: Verify signature S = 1459 using values from Problem 3 */
     printf("Problem 4: Using values from Problem 3, verify signature S = 1459\n");
+    S = BN_new();
+    BN_dec2bn(&S, "1459");
 
-    BIGNUM *S4 = BN_new();
-    BIGNUM *M_verify = BN_new();
-    BN_dec2bn(&S4, "1459");
-
-    // Verify signature: calculate M' = S^e mod n
-    BN_mod_exp(M_verify, S4, e3, n3, ctx);
-    printBN("S^e mod n =", M_verify);
-
-    // Compare with original message M
-    if (BN_cmp(M_verify, M3) == 0) {
+    // To verify: check if M = S^e mod n
+    int verified = verify_signature(M, S, e, n, ctx);
+    if (verified) {
         printf("Signature is valid: S^e mod n = M\n");
     } else {
         printf("Signature is invalid: S^e mod n != M\n");
+
+        // Show the value of S^e mod n
+        BIGNUM *calculated_M = BN_new();
+        BN_mod_exp(calculated_M, S, e, n, ctx);
+        printBN("S^e mod n =", calculated_M);
+        BN_free(calculated_M);
     }
 
-    // Clean up remaining resources
-    BN_free(p3);
-    BN_free(q3);
-    BN_free(n3);
-    BN_free(e3);
-    BN_free(d3);
-    BN_free(phi3);
-    BN_free(M3);
-    BN_free(C3);
-    BN_free(S4);
-    BN_free(M_verify);
+    // Clean up
+    BN_free(p);
+    BN_free(q);
+    BN_free(n);
+    BN_free(e);
+    BN_free(d);
+    BN_free(M);
+    BN_free(C);
+    BN_free(S);
+    BN_free(phi);
+    BN_free(p_minus_1);
+    BN_free(q_minus_1);
     BN_CTX_free(ctx);
 
     return 0;
