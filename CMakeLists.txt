@@ -3,4 +3,6 @@ project(code C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(code main.c)
+add_executable(rsa rsa.c)
+add_executable(dh diffie-hellman.c)
+add_executable(eg el-gamal.c)
