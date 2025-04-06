@@ -28,7 +28,7 @@ BIGNUM* calculate_shared_key(BIGNUM *y, BIGNUM *x, BIGNUM *p) {
 }
 
 void solve() {
-    printf("\n=== Solving Diffie-Hellman Problems ===\n");
+    printf("\n=== Diffie-Hellman Problems Solutions ===\n");
 
     // Problem 1: p=773, g=200, xa=333, xb=603
     BIGNUM *p1 = BN_new();

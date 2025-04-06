@@ -81,7 +81,7 @@ int verify_signature(BIGNUM *M, BIGNUM *S, BIGNUM *e, BIGNUM *n) {
 }
 
 void solve() {
-    printf("\n=== Solving RSA Problems ===\n");
+    printf("\n=== RSA Problems Solutions ===\n");
     BN_CTX *ctx = BN_CTX_new();
 
     // Problem 1: n=6887, e=143, M=1234, find d and C

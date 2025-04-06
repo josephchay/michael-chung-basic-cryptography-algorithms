@@ -62,7 +62,7 @@ BIGNUM* calculate_public_key(BIGNUM *g, BIGNUM *x, BIGNUM *p) {
 }
 
 void solve() {
-    printf("\n=== Solving El-Gamal Problems ===\n");
+    printf("\n=== El-Gamal Problems Solutions ===\n");
 
     // Problem 1: p=773, g=200, xa=333, xb=603, M=321
     BIGNUM *p1 = BN_new();
