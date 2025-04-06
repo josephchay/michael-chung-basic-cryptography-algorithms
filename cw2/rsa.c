@@ -1,207 +1,224 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <openssl/bn.h>
 
+// Utility function to print BIGNUM values
 void printBN(char *msg, BIGNUM *a) {
     char *number_str = BN_bn2dec(a);
     printf("%s %s\n", msg, number_str);
     OPENSSL_free(number_str);
 }
 
-// Calculates the private key d given p, q, and e
-BIGNUM* calculate_private_key(BIGNUM *p, BIGNUM *q, BIGNUM *e) {
-    BN_CTX *ctx = BN_CTX_new();
+// Calculate phi(n) = (p-1)(q-1)
+BIGNUM* calculate_phi(BIGNUM *p, BIGNUM *q, BN_CTX *ctx) {
     BIGNUM *phi = BN_new();
     BIGNUM *p_minus_1 = BN_new();
     BIGNUM *q_minus_1 = BN_new();
-    BIGNUM *d = BN_new();
 
-    // Calculate φ(n) = (p-1)(q-1)
     BN_copy(p_minus_1, p);
     BN_copy(q_minus_1, q);
     BN_sub(p_minus_1, p_minus_1, BN_value_one());
     BN_sub(q_minus_1, q_minus_1, BN_value_one());
     BN_mul(phi, p_minus_1, q_minus_1, ctx);
 
-    // Calculate d = e^(-1) mod φ(n)
-    BN_mod_inverse(d, e, phi, ctx);
-
-    BN_free(phi);
     BN_free(p_minus_1);
     BN_free(q_minus_1);
-    BN_CTX_free(ctx);
+    return phi;
+}
 
+// Calculate private key d = e^(-1) mod phi(n)
+BIGNUM* calculate_private_key(BIGNUM *e, BIGNUM *phi, BN_CTX *ctx) {
+    BIGNUM *d = BN_new();
+    BN_mod_inverse(d, e, phi, ctx);
     return d;
 }
 
-// Encrypts a message using RSA: C = M^e mod n
-BIGNUM* encrypt(BIGNUM *M, BIGNUM *e, BIGNUM *n) {
-    BN_CTX *ctx = BN_CTX_new();
+// Calculate public key e = d^(-1) mod phi(n)
+BIGNUM* calculate_public_key(BIGNUM *d, BIGNUM *phi, BN_CTX *ctx) {
+    BIGNUM *e = BN_new();
+    BN_mod_inverse(e, d, phi, ctx);
+    return e;
+}
+
+// RSA encryption: C = M^e mod n
+BIGNUM* encrypt(BIGNUM *M, BIGNUM *e, BIGNUM *n, BN_CTX *ctx) {
     BIGNUM *C = BN_new();
-
-    // C = M^e mod n
     BN_mod_exp(C, M, e, n, ctx);
-
-    BN_CTX_free(ctx);
     return C;
 }
 
-// Decrypts a ciphertext using RSA: M = C^d mod n
-BIGNUM* decrypt(BIGNUM *C, BIGNUM *d, BIGNUM *n) {
-    BN_CTX *ctx = BN_CTX_new();
+// RSA decryption: M = C^d mod n
+BIGNUM* decrypt(BIGNUM *C, BIGNUM *d, BIGNUM *n, BN_CTX *ctx) {
     BIGNUM *M = BN_new();
-
-    // M = C^d mod n
     BN_mod_exp(M, C, d, n, ctx);
-
-    BN_CTX_free(ctx);
     return M;
 }
 
-// Verifies an RSA signature: returns 1 if valid, 0 if invalid
-int verify_signature(BIGNUM *M, BIGNUM *S, BIGNUM *e, BIGNUM *n) {
-    BN_CTX *ctx = BN_CTX_new();
+// Verify RSA signature: returns 1 if valid, 0 if invalid
+int verify_signature(BIGNUM *M, BIGNUM *S, BIGNUM *e, BIGNUM *n, BN_CTX *ctx) {
     BIGNUM *M_verify = BN_new();
     int result;
 
     printf("Steps:\n");
-    printf("For signature verification, Bob needs to perform these operations:\n");
-    printf("1. Compute M' = S^e mod n, specifically %s^%s mod %s\n",
+    printf("In order for Bob to verify the signature, he has to do the following:\n");
+    printf("1. Apply the formula M' = S^e mod n, i.e., %s^%s mod %s\n",
            BN_bn2dec(S), BN_bn2dec(e), BN_bn2dec(n));
-    printf("2. Verify whether M' matches the original message M\n");
-    printf("A match between M' and M will confirm the signature's legitimacy and verifies Alice's authorship.\n\n");
+    printf("2. Check if M' is equivalent to the expected message M\n");
+    printf("If they match, the signature is valid and comes from Alice.\n\n");
 
     // M' = S^e mod n
     BN_mod_exp(M_verify, S, e, n, ctx);
 
-    // Print the verification value
     printBN("M' = ", M_verify);
 
     // Check if M' equals M
     result = (BN_cmp(M_verify, M) == 0);
 
-    BN_free(M_verify);
-    BN_CTX_free(ctx);
+    printf("Thus, the signature is %s! The message is %s from Alice.\n",
+           result ? "valid" : "invalid",
+           result ? "" : "not");
 
+    BN_free(M_verify);
     return result;
 }
 
-void solve() {
-    printf("\n=== RSA Problems Solutions ===\n");
+// Solve RSA problem 1: find d and C given n, e, M
+void solve_rsa1() {
     BN_CTX *ctx = BN_CTX_new();
+    BIGNUM *n = BN_new();
+    BIGNUM *e = BN_new();
+    BIGNUM *M = BN_new();
+    BIGNUM *p = BN_new();
+    BIGNUM *q = BN_new();
 
-    // Problem 1: n=6887, e=143, M=1234, find d and C
-    BIGNUM *n1 = BN_new();
-    BIGNUM *e1 = BN_new();
-    BIGNUM *M1 = BN_new();
-    BIGNUM *p1 = BN_new();
-    BIGNUM *q1 = BN_new();
+    BN_dec2bn(&n, "6887");
+    BN_dec2bn(&e, "143");
+    BN_dec2bn(&M, "1234");
+    BN_dec2bn(&p, "71");
+    BN_dec2bn(&q, "97");
 
-    BN_dec2bn(&n1, "6887");
-    BN_dec2bn(&e1, "143");
-    BN_dec2bn(&M1, "1234");
+    BIGNUM *phi = calculate_phi(p, q, ctx);
+    BIGNUM *d = calculate_private_key(e, phi, ctx);
+    BIGNUM *C = encrypt(M, e, n, ctx);
 
-    // Known factorization: 6887 = 71 × 97
-    BN_dec2bn(&p1, "71");
-    BN_dec2bn(&q1, "97");
+    printf("Problem 1:\n");
+    printf("Decryption key (d) = %s\n", BN_bn2dec(d));
+    printf("Ciphertext (C) = %s\n", BN_bn2dec(C));
 
-    BIGNUM *d1 = calculate_private_key(p1, q1, e1);
-    BIGNUM *C1 = encrypt(M1, e1, n1);
+    BN_free(n);
+    BN_free(e);
+    BN_free(M);
+    BN_free(p);
+    BN_free(q);
+    BN_free(phi);
+    BN_free(d);
+    BN_free(C);
+    BN_CTX_free(ctx);
+}
 
-    printf("Problem 1\n");
-    printBN("Decryption key (d) =", d1);
-    printBN("Ciphertext key (C) =", C1);
-    printf("\n");
+// Solve RSA problem 2: find e and C given n, d, M
+void solve_rsa2() {
+    BN_CTX *ctx = BN_CTX_new();
+    BIGNUM *n = BN_new();
+    BIGNUM *d = BN_new();
+    BIGNUM *M = BN_new();
+    BIGNUM *p = BN_new();
+    BIGNUM *q = BN_new();
 
-    // Problem 2: n=69353, d=29401, M=12345, find e and C
-    BIGNUM *n2 = BN_new();
-    BIGNUM *d2 = BN_new();
-    BIGNUM *M2 = BN_new();
-    BIGNUM *p2 = BN_new();
-    BIGNUM *q2 = BN_new();
-    BIGNUM *phi2 = BN_new();
-    BIGNUM *e2 = BN_new();
+    BN_dec2bn(&n, "69353");
+    BN_dec2bn(&d, "29401");
+    BN_dec2bn(&M, "12345");
+    BN_dec2bn(&p, "223");
+    BN_dec2bn(&q, "311");
 
-    BN_dec2bn(&n2, "69353");
-    BN_dec2bn(&d2, "29401");
-    BN_dec2bn(&M2, "12345");
+    BIGNUM *phi = calculate_phi(p, q, ctx);
+    BIGNUM *e = calculate_public_key(d, phi, ctx);
+    BIGNUM *C = encrypt(M, e, n, ctx);
 
-    // Known factorization: 69353 = 223 × 311
-    BN_dec2bn(&p2, "223");
-    BN_dec2bn(&q2, "311");
+    printf("Problem 2:\n");
+    printf("Encryption key (e) = %s\n", BN_bn2dec(e));
+    printf("Ciphertext (C) = %s\n", BN_bn2dec(C));
 
-    BIGNUM *p2_minus_1 = BN_new();
-    BIGNUM *q2_minus_1 = BN_new();
-    BN_copy(p2_minus_1, p2);
-    BN_copy(q2_minus_1, q2);
-    BN_sub(p2_minus_1, p2_minus_1, BN_value_one());
-    BN_sub(q2_minus_1, q2_minus_1, BN_value_one());
-    BN_mul(phi2, p2_minus_1, q2_minus_1, ctx);
+    BN_free(n);
+    BN_free(d);
+    BN_free(M);
+    BN_free(p);
+    BN_free(q);
+    BN_free(phi);
+    BN_free(e);
+    BN_free(C);
+    BN_CTX_free(ctx);
+}
 
-    // Find e: e = d^(-1) mod φ(n)
-    BN_mod_inverse(e2, d2, phi2, ctx);
+// Solve RSA problem 3: find d and M given p, q, e, C
+void solve_rsa3() {
+    BN_CTX *ctx = BN_CTX_new();
+    BIGNUM *p = BN_new();
+    BIGNUM *q = BN_new();
+    BIGNUM *e = BN_new();
+    BIGNUM *C = BN_new();
 
-    // Encrypt: C = M^e mod n
-    BIGNUM *C2 = encrypt(M2, e2, n2);
+    BN_dec2bn(&p, "37");
+    BN_dec2bn(&q, "67");
+    BN_dec2bn(&e, "169");
+    BN_dec2bn(&C, "1744");
 
-    printf("Problem 2\n");
-    printBN("Encryption key (e) =", e2);
-    printBN("Ciphertext key (C) =", C2);
-    printf("\n");
+    BIGNUM *n = BN_new();
+    BN_mul(n, p, q, ctx);
 
-    // Problem 3: p=37, q=67, e=169, C=1744, find d and M
-    BIGNUM *p3 = BN_new();
-    BIGNUM *q3 = BN_new();
-    BIGNUM *e3 = BN_new();
-    BIGNUM *C3 = BN_new();
+    BIGNUM *phi = calculate_phi(p, q, ctx);
+    BIGNUM *d = calculate_private_key(e, phi, ctx);
+    BIGNUM *M = decrypt(C, d, n, ctx);
 
-    BN_dec2bn(&p3, "37");
-    BN_dec2bn(&q3, "67");
-    BN_dec2bn(&e3, "169");
-    BN_dec2bn(&C3, "1744");
+    printf("Problem 3:\n");
+    printf("Decryption key (d) = %s\n", BN_bn2dec(d));
+    printf("Plaintext (M) = %s\n", BN_bn2dec(M));
 
-    // Calculate n = p×q
-    BIGNUM *n3 = BN_new();
-    BN_mul(n3, p3, q3, ctx);
+    BN_free(p);
+    BN_free(q);
+    BN_free(e);
+    BN_free(C);
+    BN_free(n);
+    BN_free(phi);
+    BN_free(d);
+    BN_free(M);
+    BN_CTX_free(ctx);
+}
 
-    // Calculate d
-    BIGNUM *d3 = calculate_private_key(p3, q3, e3);
-
-    // Decrypt: M = C^d mod n
-    BIGNUM *M3 = decrypt(C3, d3, n3);
-
-    printf("Problem 3\n");
-    printBN("Decryption key (d) =", d3);
-    printBN("Plaintext (M) =", M3);
-    printf("\n");
-
-    // Problem 4: Verify signature S=1459 using values from Problem 3
+// Solve RSA problem 4: verify signature S using values from Problem 3
+void solve_rsa4() {
+    BN_CTX *ctx = BN_CTX_new();
+    BIGNUM *p = BN_new();
+    BIGNUM *q = BN_new();
+    BIGNUM *e = BN_new();
+    BIGNUM *M = BN_new();
     BIGNUM *S = BN_new();
+
+    BN_dec2bn(&p, "37");
+    BN_dec2bn(&q, "67");
+    BN_dec2bn(&e, "169");
+    BN_dec2bn(&M, "1234");
     BN_dec2bn(&S, "1459");
 
-    printf("Problem 4\n");
-    int valid = verify_signature(M3, S, e3, n3);
+    BIGNUM *n = BN_new();
+    BN_mul(n, p, q, ctx);
 
-    printf("Conclusion: The signature is %s! This message was %s sent by Alice.\n",
-           valid ? "authentic" : "invalid",
-           valid ? "definitely" : "not");
+    printf("Problem 4:\n");
+    verify_signature(M, S, e, n, ctx);
 
-    // Free all memory
-    BN_free(n1); BN_free(e1); BN_free(M1); BN_free(p1); BN_free(q1);
-    BN_free(d1); BN_free(C1);
-
-    BN_free(n2); BN_free(d2); BN_free(M2); BN_free(p2); BN_free(q2);
-    BN_free(phi2); BN_free(e2); BN_free(C2); BN_free(p2_minus_1); BN_free(q2_minus_1);
-
-    BN_free(p3); BN_free(q3); BN_free(e3); BN_free(C3); BN_free(n3);
-    BN_free(d3); BN_free(M3);
-
+    BN_free(p);
+    BN_free(q);
+    BN_free(e);
+    BN_free(M);
     BN_free(S);
+    BN_free(n);
     BN_CTX_free(ctx);
 }
 
 int main() {
-    solve();
+    printf("=== RSA Problems Solutions ===\n");
+    solve_rsa1();
+    solve_rsa2();
+    solve_rsa3();
+    solve_rsa4();
     return 0;
 }
