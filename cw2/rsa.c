@@ -40,14 +40,14 @@ BIGNUM* calculate_public_key(BIGNUM *d, BIGNUM *phi, BN_CTX *ctx) {
 }
 
 // RSA encryption: C = M^e mod n
-BIGNUM* encrypt(BIGNUM *M, BIGNUM *e, BIGNUM *n, BN_CTX *ctx) {
+BIGNUM* encrypt_rsa(BIGNUM *M, BIGNUM *e, BIGNUM *n, BN_CTX *ctx) {
     BIGNUM *C = BN_new();
     BN_mod_exp(C, M, e, n, ctx);
     return C;
 }
 
 // RSA decryption: M = C^d mod n
-BIGNUM* decrypt(BIGNUM *C, BIGNUM *d, BIGNUM *n, BN_CTX *ctx) {
+BIGNUM* decrypt_rsa(BIGNUM *C, BIGNUM *d, BIGNUM *n, BN_CTX *ctx) {
     BIGNUM *M = BN_new();
     BN_mod_exp(M, C, d, n, ctx);
     return M;
@@ -98,7 +98,7 @@ void solve_rsa1() {
 
     BIGNUM *phi = calculate_phi(p, q, ctx);
     BIGNUM *d = calculate_private_key(e, phi, ctx);
-    BIGNUM *C = encrypt(M, e, n, ctx);
+    BIGNUM *C = encrypt_rsa(M, e, n, ctx);
 
     printf("Problem 1:\n");
     printf("Decryption key (d) = %s\n", BN_bn2dec(d));
@@ -132,7 +132,7 @@ void solve_rsa2() {
 
     BIGNUM *phi = calculate_phi(p, q, ctx);
     BIGNUM *e = calculate_public_key(d, phi, ctx);
-    BIGNUM *C = encrypt(M, e, n, ctx);
+    BIGNUM *C = encrypt_rsa(M, e, n, ctx);
 
     printf("Problem 2:\n");
     printf("Encryption key (e) = %s\n", BN_bn2dec(e));
@@ -171,7 +171,7 @@ void solve_rsa3_and_4() {
 
     BIGNUM *phi = calculate_phi(p, q, ctx);
     BIGNUM *d = calculate_private_key(e, phi, ctx);
-    BIGNUM *M = decrypt(C, d, n, ctx);
+    BIGNUM *M = decrypt_rsa(C, d, n, ctx);
 
     printf("Problem 3:\n");
     printf("Decryption key (d) = %s\n", BN_bn2dec(d));
@@ -192,6 +192,7 @@ void solve_rsa3_and_4() {
     BN_CTX_free(ctx);
 }
 
+// RSA main function to solve problems
 int main() {
     printf("\n=== RSA Problems Solutions ===\n");
     solve_rsa1();

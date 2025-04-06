@@ -22,6 +22,22 @@ BIGNUM* calculate_message_key(BIGNUM *y, BIGNUM *x, BIGNUM *p, BN_CTX *ctx) {
     return K;
 }
 
+// El-Gamal encryption: Produces ciphertext (C1, C2) from message M
+void encrypt_elgamal(BIGNUM *M, BIGNUM *g, BIGNUM *xa, BIGNUM *yb, BIGNUM *p,
+                     BIGNUM *C1, BIGNUM *C2, BN_CTX *ctx) {
+    // Calculate C1 = g^xa mod p
+    BN_mod_exp(C1, g, xa, p, ctx);
+
+    // Calculate K = yb^xa mod p
+    BIGNUM *K = BN_new();
+    BN_mod_exp(K, yb, xa, p, ctx);
+
+    // Calculate C2 = M * K mod p
+    BN_mod_mul(C2, M, K, p, ctx);
+
+    BN_free(K);
+}
+
 // El-Gamal decryption: M = C2 * (C1^x)^(-1) mod p
 BIGNUM* decrypt_elgamal(BIGNUM *C1, BIGNUM *C2, BIGNUM *x, BIGNUM *p, BN_CTX *ctx) {
     BIGNUM *K = BN_new();
@@ -63,13 +79,10 @@ void solve_eg1() {
     // Calculate K = yb^xa mod p
     BIGNUM *K = calculate_message_key(yb, xa, p, ctx);
 
-    // C1 = g^xa mod p
+    // Encrypt the message
     BIGNUM *C1 = BN_new();
-    BN_mod_exp(C1, g, xa, p, ctx);
-
-    // C2 = M * K mod p
     BIGNUM *C2 = BN_new();
-    BN_mod_mul(C2, M, K, p, ctx);
+    encrypt_elgamal(M, g, xa, yb, p, C1, C2, ctx);
 
     printf("Problem 1:\n");
     printf("Alice's public key (ya) = %s\n", BN_bn2dec(ya));
@@ -127,6 +140,7 @@ void solve_eg2() {
     BN_CTX_free(ctx);
 }
 
+// El-Gamal main function to solve problems
 int main() {
     printf("\n=== El-Gamal Problems Solutions ===\n");
     solve_eg1();

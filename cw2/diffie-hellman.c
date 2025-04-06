@@ -86,6 +86,7 @@ void solve_dh2() {
     BN_CTX_free(ctx);
 }
 
+// Diffie-Hellman main function to solve problems
 int main() {
     printf("\n=== Diffie-Hellman Solutions ===\n");
     solve_dh1();
