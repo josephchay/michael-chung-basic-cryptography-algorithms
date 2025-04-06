@@ -42,7 +42,7 @@ BIGNUM* decrypt_elgamal(BIGNUM *C1, BIGNUM *C2, BIGNUM *x, BIGNUM *p, BN_CTX *ct
     return M;
 }
 
-// Solve El-Gamal problem 1: find ya, yb, K, C1, and C2 given p, g, xa, xb, M
+// Solve El-Gamal problem 1: find K, C1, and C2 given p, g, xa, xb, M
 void solve_eg1() {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *p = BN_new();
@@ -91,7 +91,7 @@ void solve_eg1() {
     BN_CTX_free(ctx);
 }
 
-// Solve El-Gamal problem 2: find K and M given p, g, xb, C1, C2
+// Solve El-Gamal problem 2: find K and M given p, g, xa, xb, C1, C2
 void solve_eg2() {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *p = BN_new();
