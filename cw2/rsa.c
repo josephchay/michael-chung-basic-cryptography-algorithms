@@ -59,11 +59,11 @@ int verify_signature(BIGNUM *M, BIGNUM *S, BIGNUM *e, BIGNUM *n, BN_CTX *ctx) {
     int result;
 
     printf("Steps:\n");
-    printf("In order for Bob to verify the signature, he has to do the following:\n");
-    printf("1. Apply the formula M' = S^e mod n, i.e., %s^%s mod %s\n",
+    printf("For signature verification, Bob needs to perform these operations:\n");
+    printf("1. Compute M' = S^e mod n, specifically %s^%s mod %s\n",
            BN_bn2dec(S), BN_bn2dec(e), BN_bn2dec(n));
-    printf("2. Check if M' is equivalent to the expected message M\n");
-    printf("If they match, the signature is valid and comes from Alice.\n\n");
+    printf("2. Verify whether M' matches the original message M\n");
+    printf("A match between M' and M will confirm the signature's legitimacy and verifies Alice's authorship.\n\n");
 
     // M' = S^e mod n
     BN_mod_exp(M_verify, S, e, n, ctx);
@@ -102,7 +102,7 @@ void solve_rsa1() {
 
     printf("Problem 1:\n");
     printf("Decryption key (d) = %s\n", BN_bn2dec(d));
-    printf("Ciphertext (C) = %s\n", BN_bn2dec(C));
+    printf("Ciphertext (C) = %s\n\n", BN_bn2dec(C));
 
     BN_free(n);
     BN_free(e);
@@ -136,7 +136,7 @@ void solve_rsa2() {
 
     printf("Problem 2:\n");
     printf("Encryption key (e) = %s\n", BN_bn2dec(e));
-    printf("Ciphertext (C) = %s\n", BN_bn2dec(C));
+    printf("Ciphertext (C) = %s\n\n", BN_bn2dec(C));
 
     BN_free(n);
     BN_free(d);
@@ -150,17 +150,21 @@ void solve_rsa2() {
 }
 
 // Solve RSA problem 3: find d and M given p, q, e, C
-void solve_rsa3() {
+// Solve RSA problem 4: verify signature S using values from Problem 3
+void solve_rsa3_and_4() {
+    // Solve together to avoid redundancy
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *p = BN_new();
     BIGNUM *q = BN_new();
     BIGNUM *e = BN_new();
     BIGNUM *C = BN_new();
+    BIGNUM *S = BN_new();
 
     BN_dec2bn(&p, "37");
     BN_dec2bn(&q, "67");
     BN_dec2bn(&e, "169");
     BN_dec2bn(&C, "1744");
+    BN_dec2bn(&S, "1459");
 
     BIGNUM *n = BN_new();
     BN_mul(n, p, q, ctx);
@@ -171,36 +175,7 @@ void solve_rsa3() {
 
     printf("Problem 3:\n");
     printf("Decryption key (d) = %s\n", BN_bn2dec(d));
-    printf("Plaintext (M) = %s\n", BN_bn2dec(M));
-
-    BN_free(p);
-    BN_free(q);
-    BN_free(e);
-    BN_free(C);
-    BN_free(n);
-    BN_free(phi);
-    BN_free(d);
-    BN_free(M);
-    BN_CTX_free(ctx);
-}
-
-// Solve RSA problem 4: verify signature S using values from Problem 3
-void solve_rsa4() {
-    BN_CTX *ctx = BN_CTX_new();
-    BIGNUM *p = BN_new();
-    BIGNUM *q = BN_new();
-    BIGNUM *e = BN_new();
-    BIGNUM *M = BN_new();
-    BIGNUM *S = BN_new();
-
-    BN_dec2bn(&p, "37");
-    BN_dec2bn(&q, "67");
-    BN_dec2bn(&e, "169");
-    BN_dec2bn(&M, "1234");
-    BN_dec2bn(&S, "1459");
-
-    BIGNUM *n = BN_new();
-    BN_mul(n, p, q, ctx);
+    printf("Plaintext (M) = %s\n\n", BN_bn2dec(M));
 
     printf("Problem 4:\n");
     verify_signature(M, S, e, n, ctx);
@@ -208,17 +183,19 @@ void solve_rsa4() {
     BN_free(p);
     BN_free(q);
     BN_free(e);
-    BN_free(M);
+    BN_free(C);
     BN_free(S);
     BN_free(n);
+    BN_free(phi);
+    BN_free(d);
+    BN_free(M);
     BN_CTX_free(ctx);
 }
 
 int main() {
-    printf("=== RSA Problems Solutions ===\n");
+    printf("\n=== RSA Problems Solutions ===\n");
     solve_rsa1();
     solve_rsa2();
-    solve_rsa3();
-    solve_rsa4();
+    solve_rsa3_and_4();
     return 0;
 }

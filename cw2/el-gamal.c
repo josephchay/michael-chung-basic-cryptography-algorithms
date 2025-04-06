@@ -15,10 +15,10 @@ BIGNUM* calculate_public_key(BIGNUM *g, BIGNUM *x, BIGNUM *p, BN_CTX *ctx) {
     return y;
 }
 
-// Calculate message key: K = y^k mod p
-BIGNUM* calculate_message_key(BIGNUM *y, BIGNUM *k, BIGNUM *p, BN_CTX *ctx) {
+// Calculate message key: K = y^x mod p
+BIGNUM* calculate_message_key(BIGNUM *y, BIGNUM *x, BIGNUM *p, BN_CTX *ctx) {
     BIGNUM *K = BN_new();
-    BN_mod_exp(K, y, k, p, ctx);
+    BN_mod_exp(K, y, x, p, ctx);
     return K;
 }
 
@@ -50,23 +50,22 @@ void solve_eg1() {
     BIGNUM *xa = BN_new();
     BIGNUM *xb = BN_new();
     BIGNUM *M = BN_new();
-    BIGNUM *k = BN_new();
 
     BN_dec2bn(&p, "773");
     BN_dec2bn(&g, "200");
     BN_dec2bn(&xa, "333");
     BN_dec2bn(&xb, "603");
     BN_dec2bn(&M, "321");
-    BN_dec2bn(&k, "333");  // Using xa as ephemeral key
 
     BIGNUM *ya = calculate_public_key(g, xa, p, ctx);
     BIGNUM *yb = calculate_public_key(g, xb, p, ctx);
 
-    // C1 = g^k mod p
-    BIGNUM *C1 = calculate_public_key(g, k, p, ctx);
+    // Calculate K = yb^xa mod p
+    BIGNUM *K = calculate_message_key(yb, xa, p, ctx);
 
-    // K = yb^k mod p
-    BIGNUM *K = calculate_message_key(yb, k, p, ctx);
+    // C1 = g^xa mod p
+    BIGNUM *C1 = BN_new();
+    BN_mod_exp(C1, g, xa, p, ctx);
 
     // C2 = M * K mod p
     BIGNUM *C2 = BN_new();
@@ -77,14 +76,13 @@ void solve_eg1() {
     printf("Bob's public key (yb) = %s\n", BN_bn2dec(yb));
     printf("Message key (K) = %s\n", BN_bn2dec(K));
     printf("C1 = %s\n", BN_bn2dec(C1));
-    printf("C2 = %s\n", BN_bn2dec(C2));
+    printf("C2 = %s\n\n", BN_bn2dec(C2));
 
     BN_free(p);
     BN_free(g);
     BN_free(xa);
     BN_free(xb);
     BN_free(M);
-    BN_free(k);
     BN_free(ya);
     BN_free(yb);
     BN_free(K);
@@ -108,7 +106,7 @@ void solve_eg2() {
     BN_dec2bn(&C1, "3533");
     BN_dec2bn(&C2, "3719");
 
-    // K = C1^xb mod p
+    // Calculate K = C1^xb mod p
     BIGNUM *K = BN_new();
     BN_mod_exp(K, C1, xb, p, ctx);
 
@@ -130,7 +128,7 @@ void solve_eg2() {
 }
 
 int main() {
-    printf("=== El-Gamal Encryption Solutions ===\n");
+    printf("\n=== El-Gamal Problems Solutions ===\n");
     solve_eg1();
     solve_eg2();
     return 0;

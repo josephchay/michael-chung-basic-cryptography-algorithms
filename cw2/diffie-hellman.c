@@ -74,7 +74,7 @@ void solve_dh2() {
     printf("Problem 2:\n");
     printf("Alice's public key (ya) = %s\n", BN_bn2dec(ya));
     printf("Bob's public key (yb) = %s\n", BN_bn2dec(yb));
-    printf("Shared secret key (Kab) = %s\n", BN_bn2dec(Kab));
+    printf("Shared secret key (Kab) = %s\n\n", BN_bn2dec(Kab));
 
     BN_free(p);
     BN_free(g);
@@ -87,7 +87,7 @@ void solve_dh2() {
 }
 
 int main() {
-    printf("=== Diffie-Hellman Solutions ===\n");
+    printf("\n=== Diffie-Hellman Solutions ===\n");
     solve_dh1();
     solve_dh2();
     return 0;
