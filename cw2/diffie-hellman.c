@@ -22,7 +22,7 @@ BIGNUM* calculate_shared_key(BIGNUM *y, BIGNUM *x, BIGNUM *p, BN_CTX *ctx) {
     return K;
 }
 
-// Solve Diffie-Hellman problem 1
+// Solve Diffie-Hellman problem 1: find ya, yb, and Kab given p, g, xa, xb
 void solve_dh1() {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *p = BN_new();
@@ -42,7 +42,7 @@ void solve_dh1() {
     printf("Problem 1:\n");
     printf("Alice's public key (ya) = %s\n", BN_bn2dec(ya));
     printf("Bob's public key (yb) = %s\n", BN_bn2dec(yb));
-    printf("Shared secret key (Kab) = %s\n", BN_bn2dec(Kab));
+    printf("Shared secret key (Kab) = %s\n\n", BN_bn2dec(Kab));
 
     BN_free(p);
     BN_free(g);
@@ -54,7 +54,7 @@ void solve_dh1() {
     BN_CTX_free(ctx);
 }
 
-// Solve Diffie-Hellman problem 2
+// Solve Diffie-Hellman problem 2: find ya, yb, and Kab given p, g, xa, xb
 void solve_dh2() {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *p = BN_new();
