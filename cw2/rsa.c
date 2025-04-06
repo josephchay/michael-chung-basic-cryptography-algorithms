@@ -65,14 +65,21 @@ int verify_signature(BIGNUM *M, BIGNUM *S, BIGNUM *e, BIGNUM *n) {
     BIGNUM *M_verify = BN_new();
     int result;
 
+    printf("Steps:\n");
+    printf("For signature verification, Bob needs to perform these operations:\n");
+    printf("1. Compute M' = S^e mod n, specifically %s^%s mod %s\n",
+           BN_bn2dec(S), BN_bn2dec(e), BN_bn2dec(n));
+    printf("2. Verify whether M' matches the original message M\n");
+    printf("A match between M' and M will confirm the signature's legitimacy and verifies Alice's authorship.\n\n");
+
     // M' = S^e mod n
     BN_mod_exp(M_verify, S, e, n, ctx);
 
+    // Print the verification value
+    printBN("M' = ", M_verify);
+
     // Check if M' equals M
     result = (BN_cmp(M_verify, M) == 0);
-
-    // Print the verification value
-    printBN("Verification value (S^e mod n) =", M_verify);
 
     BN_free(M_verify);
     BN_CTX_free(ctx);
@@ -103,8 +110,8 @@ void solve() {
     BIGNUM *C1 = encrypt(M1, e1, n1);
 
     printf("Problem 1\n");
-    printBN("d =", d1);
-    printBN("C =", C1);
+    printBN("Decryption key (d) =", d1);
+    printBN("Ciphertext key (C) =", C1);
     printf("\n");
 
     // Problem 2: n=69353, d=29401, M=12345, find e and C
@@ -139,8 +146,8 @@ void solve() {
     BIGNUM *C2 = encrypt(M2, e2, n2);
 
     printf("Problem 2\n");
-    printBN("e =", e2);
-    printBN("C =", C2);
+    printBN("Encryption key (e) =", e2);
+    printBN("Ciphertext key (C) =", C2);
     printf("\n");
 
     // Problem 3: p=37, q=67, e=169, C=1744, find d and M
@@ -165,8 +172,8 @@ void solve() {
     BIGNUM *M3 = decrypt(C3, d3, n3);
 
     printf("Problem 3\n");
-    printBN("d =", d3);
-    printBN("M =", M3);
+    printBN("Decryption key (d) =", d3);
+    printBN("Plaintext (M) =", M3);
     printf("\n");
 
     // Problem 4: Verify signature S=1459 using values from Problem 3
@@ -175,7 +182,10 @@ void solve() {
 
     printf("Problem 4\n");
     int valid = verify_signature(M3, S, e3, n3);
-    printf("Signature validation: %s\n", valid ? "VALID" : "INVALID");
+
+    printf("Conclusion: The signature is %s! This message was %s sent by Alice.\n",
+           valid ? "authentic" : "invalid",
+           valid ? "definitely" : "not");
 
     // Free all memory
     BN_free(n1); BN_free(e1); BN_free(M1); BN_free(p1); BN_free(q1);
