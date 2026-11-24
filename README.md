@@ -1,5 +1,4 @@
-# Computer Security (COMP3028 UNMC) (SPM1 24-25)
+# Basic Cryptography Algorithms
 
-##### Nottingham University Malaysia Campus Coursework 2
+Coursework 2 by Michael J H Chung of Nottingham University Malaysia School of Computer Science Year (Finael) 3 
 
----
